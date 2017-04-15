@@ -259,7 +259,7 @@ def check_stream(streams, bot):
         try:
             stream_name = user_info['stream']['channel']['display_name']
             print('{:s} is online'.format(stream['name']))
-            if not new_stream['status']:
+            if new_stream['status'] == False:
                 msgsent = bot.sendMessage(group_chat_id, 'https://www.twitch.tv/{:s}'.format(stream['name']))
                 new_stream['status'] = True
         except TypeError:
