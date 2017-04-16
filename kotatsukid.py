@@ -260,13 +260,13 @@ def check_stream(streams, bot):
 
         user_info = json.loads(stream_data.text)  # load user data json into user_info
         #print(user_info)
-        try:
+        if user_info['stream']['channel']:
             stream_name = user_info['stream']['channel']['display_name']
             print('{:s} is online'.format(stream['name']))
             if new_stream['status'] == False:
                 msgsent = bot.sendMessage(group_chat_id, 'https://www.twitch.tv/{:s}'.format(stream['name']))
                 new_stream['status'] = True
-        except TypeError:
+        else:
             print('{:s} is offline'.format(stream['name']))
             new_stream['status'] = False
         new_streams.append(new_stream)
