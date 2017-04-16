@@ -148,10 +148,8 @@ def long_text_scan(file):
     def tester(msg):
         for num, item in enumerate(file):
             if item.lower().strip('?!.') in msg['text'].lower().strip('?!.'):
-                try:
-                    msgsent = bot.sendMessage(msg['chat']['id'], casinos[num + 1], None, None, None, msg['message_id'])
-                except IndexError:
-                    pass
+                if not num == len(file) - 1:
+                    return num
         return False
     return tester
 
@@ -210,8 +208,13 @@ def repeat(msg):
     return msgsent
 
 
-def long_text_post(msg):
-    pass
+def long_text_post(casinos):
+    def handler(msg):
+        tester = long_text_scan(casinos)
+        num = tester(msg)
+        msgsent = bot.sendMessage(msg['chat']['id'], casinos[num + 1], None, None, None, msg['message_id'])
+        return msgsent
+    return handler
 
 
 handlers = [
@@ -226,7 +229,7 @@ handlers = [
             [text_contains_all([botname, '?']), question],
             [text_contains_all([botname, 'здес']), send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
             [text_contains_all([botname, 'тут']), send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
-            [long_text_scan(casinos), long_text_post],
+            [long_text_scan(casinos), long_text_post(casinos)],
             [text_contains_all_random(['аниме'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
             [text_contains_all_random(['спорт'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
             ]
@@ -241,6 +244,7 @@ def handle(msg):
         for tester, handler in handlers:
             if tester(msg):
                 handler(msg)
+                break
 
 
 def check_stream(streams, bot):
