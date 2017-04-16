@@ -260,7 +260,7 @@ def check_stream(streams, bot):
 
         user_info = json.loads(stream_data.text)  # load user data json into user_info
         #print(user_info)
-        if user_info['stream']['channel']:
+        if user_info['stream']:
             stream_name = user_info['stream']['channel']['display_name']
             print('{:s} is online'.format(stream['name']))
             if new_stream['status'] == False:
