@@ -49,7 +49,7 @@ with open('settings/imhere.txt', 'r', encoding="utf8") as imherefile:
     imherelist = imherefile.read().splitlines()
 
 with open('settings/streamnames.txt', 'r', encoding="utf8") as streamnamesfile:
-    STREAMNAMES = streamnamesfile.read().splitlines()
+    streamnames = streamnamesfile.read().splitlines()
 
 
 # Prints the message to Python console
@@ -94,7 +94,7 @@ def or_choice(msg):
         msgsent = bot.sendMessage(chat_id,
                                   '{:s} {:s}!'.format(ofcourseWordList[random.randint(0, len(ofcourseWordList) - 1)],
                                                       choicesList[mainChoice]), None, None, None, msg['message_id'])
-
+    return msgsent
 
 # Answers the question
 def question(msg):
@@ -111,7 +111,7 @@ def question(msg):
         msgsent = bot.sendMessage(chat_id, answer, None, None, None, msg['message_id'])
         if answer == 'НИКОГДА':
             bot.sendSticker(chat_id, 'CAADAgADKQADdy_1D4KPXrwAAcuj6gI')
-
+    return msgsent
 
 # Testers
 def text_match(text):
@@ -147,9 +147,8 @@ def text_contains_all_random(text, p):
 def long_text_scan(file):
     def tester(msg):
         for num, item in enumerate(file):
-            if item.lower().strip('?!.') in msg['text'].lower().strip('?!.'):
-                if not num == len(file) - 1:
-                    return num
+            if item.lower().strip('?!.') in msg['text'].lower().strip('?!.') and not num == len(file) - 1:
+                return num
         return False
     return tester
 
@@ -211,28 +210,9 @@ def repeat(msg):
 def long_text_post(casinos):
     def handler(msg):
         tester = long_text_scan(casinos)
-        num = tester(msg)
-        msgsent = bot.sendMessage(msg['chat']['id'], casinos[num + 1], None, None, None, msg['message_id'])
+        msgsent = bot.sendMessage(msg['chat']['id'], casinos[tester(msg) + 1], None, None, None, msg['message_id'])
         return msgsent
     return handler
-
-
-handlers = [
-            [is_message_replied_to(botname), send_text_with_reply(replies[random.randint(0, len(replies) - 1)])],
-            [is_message_forwarded_from_random(253025219, 0.7), send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
-            [is_message_forwarded_from_random(-1001056948674, 0.7), send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
-            [text_match('👌'), repeat],
-            [text_match('/start'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
-            [text_match('/stop'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
-            [text_contains_all(['в хату']), send_text(good_evening)],
-            [text_contains_all([botname, 'или']), or_choice],
-            [text_contains_all([botname, '?']), question],
-            [text_contains_all([botname, 'здес']), send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
-            [text_contains_all([botname, 'тут']), send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
-            [long_text_scan(casinos), long_text_post(casinos)],
-            [text_contains_all_random(['аниме'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
-            [text_contains_all_random(['спорт'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
-            ]
 
 
 def handle(msg):
@@ -240,10 +220,30 @@ def handle(msg):
     # print(content_type)
     print(msg)
 
+    handlers = [
+        [is_message_replied_to(botname), send_text_with_reply(replies[random.randint(0, len(replies) - 1)])],
+        [is_message_forwarded_from_random(253025219, 0.7),
+         send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
+        [is_message_forwarded_from_random(-1001056948674, 0.7),
+         send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
+        [text_match('👌'), repeat],
+        [text_match('/start'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
+        [text_match('/stop'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
+        [text_contains_all(['в хату']), send_text(good_evening)],
+        [text_contains_all([botname, 'здес']),
+         send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
+        [text_contains_all([botname, 'тут']), send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
+        [text_contains_all([botname, 'или']), or_choice],
+        [text_contains_all([botname, '?']), question],
+        [long_text_scan(casinos), long_text_post(casinos)],
+        [text_contains_all_random(['аниме'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
+        [text_contains_all_random(['спорт'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
+        ]
+
     if (chat_id == group_chat_id or chat_id == admin_chat_id) and (not 'edit_date' in msg):
         for tester, handler in handlers:
             if tester(msg):
-                handler(msg)
+                msgsent = handler(msg)
                 break
 
 
@@ -259,7 +259,6 @@ def check_stream(streams, bot):
             print(stream_data.text)
 
         user_info = json.loads(stream_data.text)  # load user data json into user_info
-        #print(user_info)
         if user_info['stream']:
             stream_name = user_info['stream']['channel']['display_name']
             print('{:s} is online'.format(stream['name']))
@@ -278,8 +277,8 @@ bot.message_loop(handle)
 print('I am {:s}, nice to meet you!'.format(botname))
 
 streams = []
-for STREAMNAME in STREAMNAMES:
-    streams.append({'name': STREAMNAME, 'status': None})
+for stream in streamnames:
+    streams.append({'name': stream, 'status': None})
 streams = check_stream(streams, bot)
 
 while 1:
