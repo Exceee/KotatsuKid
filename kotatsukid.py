@@ -221,24 +221,24 @@ def handle(msg):
     print(msg)
 
     handlers = [
-        [is_message_replied_to(botname), send_text_with_reply(replies[random.randint(0, len(replies) - 1)])],
-        [is_message_forwarded_from_random(253025219, 0.7),
-         send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
-        [is_message_forwarded_from_random(-1001056948674, 0.7),
-         send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
-        [text_match('👌'), repeat],
-        [text_match('/start'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
-        [text_match('/stop'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
-        [text_contains_all(['в хату']), send_text(good_evening)],
-        [text_contains_all([botname, 'здес']),
-         send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
-        [text_contains_all([botname, 'тут']), send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
-        [text_contains_all([botname, 'или']), or_choice],
-        [text_contains_all([botname, '?']), question],
-        [long_text_scan(casinos), long_text_post(casinos)],
-        [text_contains_all_random(['аниме'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
-        [text_contains_all_random(['спорт'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
-        ]
+                [is_message_replied_to(botname), send_text_with_reply(replies[random.randint(0, len(replies) - 1)])],
+                [is_message_forwarded_from_random(253025219, 0.7),
+                        send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
+                [is_message_forwarded_from_random(-1001056948674, 0.7),
+                        send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
+                [text_match('👌'), repeat],
+                [text_match('/start'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
+                [text_match('/stop'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
+                [text_contains_all(['в хату']), send_text(good_evening)],
+                [text_contains_all([botname, 'здес']),
+                        send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
+                [text_contains_all([botname, 'тут']), send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
+                [text_contains_all([botname, 'или']), or_choice],
+                [text_contains_all([botname, '?']), question],
+                [long_text_scan(casinos), long_text_post(casinos)],
+                [text_contains_all_random(['аниме'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
+                [text_contains_all_random(['спорт'], 0.95), send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
+                ]
 
     if (chat_id == group_chat_id or chat_id == admin_chat_id) and (not 'edit_date' in msg):
         for tester, handler in handlers:
