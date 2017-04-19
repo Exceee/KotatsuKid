@@ -36,6 +36,9 @@ with open('settings/sports.txt', 'r', encoding="utf8") as sportfile:
 with open('settings/casino.txt', 'r', encoding="utf8") as casinofile:
     casinos = casinofile.read().splitlines()
 
+with open('settings/bear.txt', 'r', encoding="utf8") as bearfile:
+    bears = bearfile.read().splitlines()
+
 with open('settings/ofcourse.txt', 'r', encoding="utf8") as ofcoursefile:
     ofcourseWordList = ofcoursefile.read().splitlines()
 
@@ -50,6 +53,19 @@ with open('settings/imhere.txt', 'r', encoding="utf8") as imherefile:
 
 with open('settings/streamnames.txt', 'r', encoding="utf8") as streamnamesfile:
     streamnames = streamnamesfile.read().splitlines()
+
+with open('settings/tema.txt', 'r', encoding="utf8") as temafile:
+    temas = temafile.read()
+
+with open('settings/fact18.txt', 'r', encoding="utf8") as fact18file:
+    fact18 = fact18file.read().splitlines()
+
+with open('settings/fact26.txt', 'r', encoding="utf8") as fact26file:
+    fact26 = fact26file.read().splitlines()
+
+
+def remove_spec_char(text):
+    return ''.join(e for e in text if e.isalnum())
 
 
 # Prints the message to Python console
@@ -113,6 +129,7 @@ def question(msg):
             bot.sendSticker(chat_id, 'CAADAgADKQADdy_1D4KPXrwAAcuj6gI')
     return msgsent
 
+
 # Testers
 def text_match(text):
     def tester(msg):
@@ -134,6 +151,16 @@ def text_contains_all(text):
     return tester
 
 
+def text_contains_any(text):
+    def tester(msg):
+        content_type, chat_type, chat_id = telepot.glance(msg)
+        if content_type == 'text':
+            return any(x in msg['text'] for x in text)
+        else:
+            return False
+    return tester
+
+
 def text_contains_all_random(text, p):
     def tester(msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
@@ -146,9 +173,10 @@ def text_contains_all_random(text, p):
 
 def long_text_scan(file):
     def tester(msg):
+        content_type, chat_type, chat_id = telepot.glance(msg)
         for num, item in enumerate(file):
-            if item.lower().strip('?!.') in msg['text'].lower().strip('?!.') and not num == len(file) - 1:
-                return num
+            if content_type == 'text' and remove_spec_char(item).lower().strip('?!.').replace('ё', 'е') in remove_spec_char(msg['text']).lower().strip('?!.').replace('ё', 'е') and not num == len(file) - 1:
+                return num + 1
         return False
     return tester
 
@@ -210,12 +238,27 @@ def repeat(msg):
 def long_text_post(casinos):
     def handler(msg):
         tester = long_text_scan(casinos)
-        msgsent = bot.sendMessage(msg['chat']['id'], casinos[tester(msg) + 1], None, None, None, msg['message_id'])
+        msgsent = bot.sendMessage(msg['chat']['id'], casinos[tester(msg)], None, None, None, msg['message_id'])
+        return msgsent
+    return handler
+
+
+def send_image(filename):
+    def handler(msg):
+        msgsent = bot.sendPhoto(msg['chat']['id'], filename)
+        return msgsent
+    return handler
+
+
+def send_image_with_reply(filename):
+    def handler(msg):
+        msgsent = bot.sendPhoto(msg['chat']['id'], filename, None, None, msg['message_id'])
         return msgsent
     return handler
 
 
 def handle(msg):
+    startTime = datetime.datetime.now()
     content_type, chat_type, chat_id = telepot.glance(msg)
     # print(content_type)
     print(msg)
@@ -238,15 +281,20 @@ def handle(msg):
             [text_contains_all([botname, 'или']), or_choice],
             [text_contains_all([botname, '?']), question],
             [long_text_scan(casinos), long_text_post(casinos)],
+            [long_text_scan(bears), long_text_post(bears)],
             [text_contains_all_random(['аниме'], 0.95),
              send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
             [text_contains_all_random(['спорт'], 0.95),
              send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
+            [text_contains_all(['авальн']), send_text_with_reply(temas)],
+            [text_contains_any(fact18), send_image_with_reply('http://i.imgur.com/CC3dOEH.jpg')],
+            [text_contains_any(fact26), send_image_with_reply('http://i.imgur.com/qa9SHgv.jpg')],
         ]
         for tester, handler in handlers:
             if tester(msg):
                 msgsent = handler(msg)
                 break
+    print(datetime.datetime.now() - startTime)
 
 
 def check_stream(streams, bot):
