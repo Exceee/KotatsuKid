@@ -161,6 +161,20 @@ def text_contains_any(text):
     return tester
 
 
+def text_contains_any_broaddef(text):
+    def tester(msg):
+        content_type, chat_type, chat_id = telepot.glance(msg)
+        if content_type == 'text':
+            return any(
+                x in msg['text'].lower().replace('x', 'х').replace('y', 'у')
+                         .replace('c', 'с').replace('o', 'о').replace('a', 'а')
+                for x in text
+            )
+        else:
+            return False
+    return tester
+
+
 def text_contains_all_random(text, p):
     def tester(msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
@@ -265,14 +279,17 @@ def handle(msg):
 
     if (chat_id == group_chat_id or chat_id == admin_chat_id) and (not 'edit_date' in msg):
         handlers = [
-            [is_message_replied_to(botname), send_text_with_reply(replies[random.randint(0, len(replies) - 1)])],
+            [is_message_replied_to(botname),
+             send_text_with_reply(replies[random.randint(0, len(replies) - 1)])],
             [is_message_forwarded_from_random(253025219, 0.7),
              send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
             [is_message_forwarded_from_random(-1001056948674, 0.7),
              send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
             [text_match('👌'), repeat],
-            [text_match('/start'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
-            [text_match('/stop'), send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
+            [text_match('/start'),
+             send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
+            [text_match('/stop'),
+             send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
             [text_contains_all(['в хату']), send_text(good_evening)],
             [text_contains_all([botname, 'здес']),
              send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
@@ -287,8 +304,10 @@ def handle(msg):
             [text_contains_all_random(['спорт'], 0.95),
              send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
             [text_contains_all(['авальн']), send_text_with_reply(temas)],
-            [text_contains_any(fact18), send_image_with_reply('http://i.imgur.com/CC3dOEH.jpg')],
-            [text_contains_any(fact26), send_image_with_reply('http://i.imgur.com/qa9SHgv.jpg')],
+            [text_contains_any_broaddef(fact18),
+             send_image_with_reply('http://i.imgur.com/CC3dOEH.jpg')],
+            [text_contains_any_broaddef(fact26),
+             send_image_with_reply('http://i.imgur.com/qa9SHgv.jpg')],
         ]
         for tester, handler in handlers:
             if tester(msg):
@@ -302,8 +321,10 @@ def check_stream(streams, bot):
     for stream in streams:
         new_stream = stream
         try:
-            stream_data = requests.get("https://api.twitch.tv/kraken/streams/{:s}?client_id={:s}"\
-                                       .format(stream['name'], twitch_client_id))
+            stream_data = requests.get(
+                "https://api.twitch.tv/kraken/streams/{:s}?client_id={:s}"
+                .format(stream['name'], twitch_client_id)
+            )
         except:
             print(stream_data.status_code)
             print(stream_data.text)
@@ -313,7 +334,10 @@ def check_stream(streams, bot):
             stream_name = user_info['stream']['channel']['display_name']
             print('{:s} is online'.format(stream['name']))
             if new_stream['status'] == False:
-                msgsent = bot.sendMessage(group_chat_id, 'https://www.twitch.tv/{:s}'.format(stream['name']))
+                msgsent = bot.sendMessage(
+                    group_chat_id,
+                    'https://www.twitch.tv/{:s}'.format(stream['name'])
+                )
                 new_stream['status'] = True
         else:
             print('{:s} is offline'.format(stream['name']))
