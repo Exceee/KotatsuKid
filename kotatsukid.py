@@ -63,6 +63,10 @@ with open('settings/fact18.txt', 'r', encoding="utf8") as fact18file:
 with open('settings/fact26.txt', 'r', encoding="utf8") as fact26file:
     fact26 = fact26file.read().splitlines()
 
+global lastCallFact18, lastCallFact26
+lastCallFact18 = datetime.datetime(2016, 1, 1, 0, 0, 0, 0)
+lastCallFact26 = datetime.datetime(2016, 1, 1, 0, 0, 0, 0)
+
 
 def remove_spec_char(text):
     return ''.join(e for e in text if e.isalnum())
@@ -72,17 +76,34 @@ def remove_spec_char(text):
 def print_log(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     if content_type == 'text':
-        print('{:s} {:s}: {:s}'.format(datetime.datetime.fromtimestamp(int(msg['date'])).
-                                       strftime('%Y-%m-%d %H:%M:%S'), msg['from']['username'], msg['text']))
+        print(
+              '{:s} {:s}: {:s}'
+              .format(datetime.datetime.fromtimestamp(int(msg['date']))
+                      .strftime('%Y-%m-%d %H:%M:%S'),
+                      msg['from']['username'],
+                      msg['text'])
+        )
     elif content_type == 'sticker':
-        print('{:s} {:s}: [sticker]'.format(datetime.datetime.fromtimestamp(int(msg['date'])).
-                                            strftime('%Y-%m-%d %H:%M:%S'), msg['from']['username']))
+        print(
+              '{:s} {:s}: [sticker]'
+              .format(datetime.datetime.fromtimestamp(int(msg['date']))
+                      .strftime('%Y-%m-%d %H:%M:%S'),
+                      msg['from']['username'])
+        )
     elif content_type == 'photo':
-        print('{:s} {:s}: [photo]'.format(datetime.datetime.fromtimestamp(int(msg['date'])).
-                                          strftime('%Y-%m-%d %H:%M:%S'), msg['from']['username']))
+        print(
+            '{:s} {:s}: [photo]'
+            .format(datetime.datetime.fromtimestamp(int(msg['date']))
+                    .strftime('%Y-%m-%d %H:%M:%S'),
+                    msg['from']['username'])
+        )
     elif content_type == 'document':
-        print('{:s} {:s}: [document]'.format(datetime.datetime.fromtimestamp(int(msg['date'])).
-                                             strftime('%Y-%m-%d %H:%M:%S'), msg['from']['username']))
+        print(
+            '{:s} {:s}: [document]'
+                .format(datetime.datetime.fromtimestamp(int(msg['date'])).
+                    strftime('%Y-%m-%d %H:%M:%S'),
+                        msg['from']['username'])
+        )
 
 
 # Makes the hard decision
@@ -107,9 +128,11 @@ def or_choice(msg):
         # reset the seed
         random.seed()
         # send the message
-        msgsent = bot.sendMessage(chat_id,
-                                  '{:s} {:s}!'.format(ofcourseWordList[random.randint(0, len(ofcourseWordList) - 1)],
-                                                      choicesList[mainChoice]), None, None, None, msg['message_id'])
+        msgsent = bot.sendMessage(
+            chat_id, '{:s} {:s}!'
+            .format(ofcourseWordList[random.randint(0, len(ofcourseWordList) - 1)],
+            choicesList[mainChoice]), None, None, None, msg['message_id']
+        )
     return msgsent
 
 # Answers the question
@@ -124,7 +147,9 @@ def question(msg):
         m.update(result)
         random.seed(m.hexdigest())
         answer = answerslist[random.randint(0, len(answerslist) - 1)]
-        msgsent = bot.sendMessage(chat_id, answer, None, None, None, msg['message_id'])
+        msgsent = bot.sendMessage(
+            chat_id, answer, None, None, None, msg['message_id']
+        )
         if answer == 'НИКОГДА':
             bot.sendSticker(chat_id, 'CAADAgADKQADdy_1D4KPXrwAAcuj6gI')
     return msgsent
@@ -189,7 +214,13 @@ def long_text_scan(file):
     def tester(msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
         for num, item in enumerate(file):
-            if content_type == 'text' and remove_spec_char(item).lower().strip('?!.').replace('ё', 'е') in remove_spec_char(msg['text']).lower().strip('?!.').replace('ё', 'е') and not num == len(file) - 1:
+            if (
+                    content_type == 'text' and
+                    remove_spec_char(item).lower().strip('?!.')
+                    .replace('ё', 'е') in
+                    remove_spec_char(msg['text']).lower().strip('?!.')
+                            .replace('ё', 'е') and
+                    not num == len(file) - 1):
                 return num + 1
         return False
     return tester
@@ -207,9 +238,11 @@ def is_message_replied_to(name):
 def is_message_forwarded_from_random(message_id, p):
     def tester(msg):
         if 'forward_from_chat' in msg:
-            return msg['forward_from_chat']['id'] == message_id and random.random() > p
+            return (msg['forward_from_chat']['id'] == message_id and
+                    random.random() > p)
         elif 'forward_from' in msg:
-            return msg['forward_from']['id'] == message_id and random.random() > p
+            return (msg['forward_from']['id'] == message_id and
+                    random.random() > p)
         else:
             return False
     return tester
@@ -225,7 +258,9 @@ def send_text(text):
 
 def send_text_with_reply(text):
     def handler(msg):
-        msgsent = bot.sendMessage(msg['chat']['id'], text, None, None, None, msg['message_id'])
+        msgsent = bot.sendMessage(
+            msg['chat']['id'], text, None, None, None, msg['message_id']
+        )
         return msgsent
     return handler
 
@@ -239,7 +274,9 @@ def send_sticker(sticker):
 
 def send_sticker_with_reply(sticker):
     def handler(msg):
-        msgsent = bot.sendSticker(msg['chat']['id'], sticker, None, msg['message_id'])
+        msgsent = bot.sendSticker(
+            msg['chat']['id'], sticker, None, msg['message_id']
+        )
         return msgsent
     return handler		
 
@@ -252,7 +289,10 @@ def repeat(msg):
 def long_text_post(casinos):
     def handler(msg):
         tester = long_text_scan(casinos)
-        msgsent = bot.sendMessage(msg['chat']['id'], casinos[tester(msg)], None, None, None, msg['message_id'])
+        msgsent = bot.sendMessage(
+            msg['chat']['id'], casinos[tester(msg)], None, None, None,
+            msg['message_id']
+        )
         return msgsent
     return handler
 
@@ -266,7 +306,33 @@ def send_image(filename):
 
 def send_image_with_reply(filename):
     def handler(msg):
-        msgsent = bot.sendPhoto(msg['chat']['id'], filename, None, None, msg['message_id'])
+        msgsent = bot.sendPhoto(
+            msg['chat']['id'], filename, None, None, msg['message_id']
+        )
+        return msgsent
+    return handler
+
+
+def send_image_with_reply_timer_fact18(filename):
+    def handler(msg):
+        global lastCallFact18
+        if abs((lastCallFact18 - datetime.datetime.now()).total_seconds()) > 3600:
+            msgsent = bot.sendPhoto(
+                msg['chat']['id'], filename, None, None, msg['message_id']
+            )
+            lastCallFact18 = datetime.datetime.now()
+            return msgsent
+    return handler
+
+
+def send_image_with_reply_timer_fact26(filename):
+    def handler(msg):
+        global lastCallFact26
+        if abs((lastCallFact26 - datetime.datetime.now()).total_seconds()) > 3600:
+            msgsent = bot.sendPhoto(
+                msg['chat']['id'], filename, None, None, msg['message_id']
+            )
+            lastCallFact26 = datetime.datetime.now()
         return msgsent
     return handler
 
@@ -299,15 +365,15 @@ def handle(msg):
             [text_contains_all([botname, '?']), question],
             [long_text_scan(casinos), long_text_post(casinos)],
             [long_text_scan(bears), long_text_post(bears)],
-            [text_contains_all_random(['аниме'], 0.95),
+            [text_contains_all_random([' аниме '], 0.95),
              send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
-            [text_contains_all_random(['спорт'], 0.95),
+            [text_contains_all_random([' спорт '], 0.95),
              send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
             [text_contains_all(['авальн']), send_text_with_reply(temas)],
             [text_contains_any_broaddef(fact18),
-             send_image_with_reply('http://i.imgur.com/CC3dOEH.jpg')],
+             send_image_with_reply_timer_fact18('http://i.imgur.com/CC3dOEH.jpg')],
             [text_contains_any_broaddef(fact26),
-             send_image_with_reply('http://i.imgur.com/qa9SHgv.jpg')],
+             send_image_with_reply_timer_fact18('http://i.imgur.com/qa9SHgv.jpg')],
         ]
         for tester, handler in handlers:
             if tester(msg):
@@ -329,7 +395,7 @@ def check_stream(streams, bot):
             print(stream_data.status_code)
             print(stream_data.text)
 
-        user_info = json.loads(stream_data.text)  # load user data json into user_info
+        user_info = json.loads(stream_data.text)
         if user_info['stream']:
             stream_name = user_info['stream']['channel']['display_name']
             print('{:s} is online'.format(stream['name']))
