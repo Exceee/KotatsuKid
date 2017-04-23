@@ -92,17 +92,17 @@ def print_log(msg):
         )
     elif content_type == 'photo':
         print(
-            '{:s} {:s}: [photo]'
-            .format(datetime.datetime.fromtimestamp(int(msg['date']))
-                    .strftime('%Y-%m-%d %H:%M:%S'),
-                    msg['from']['username'])
+             '{:s} {:s}: [photo]'
+             .format(datetime.datetime.fromtimestamp(int(msg['date']))
+                     .strftime('%Y-%m-%d %H:%M:%S'),
+                     msg['from']['username'])
         )
     elif content_type == 'document':
         print(
-            '{:s} {:s}: [document]'
-                .format(datetime.datetime.fromtimestamp(int(msg['date'])).
-                    strftime('%Y-%m-%d %H:%M:%S'),
-                        msg['from']['username'])
+              '{:s} {:s}: [document]'
+              .format(datetime.datetime.fromtimestamp(int(msg['date']))
+                      .strftime('%Y-%m-%d %H:%M:%S'),
+                      msg['from']['username'])
         )
 
 
@@ -114,7 +114,9 @@ def or_choice(msg):
     mo = choicesRegex.search(msg['text'])
     if mo:
         # sort the choices (also strip the '?')
-        choicesList = sorted([mo.group(1).rstrip('?'), mo.group(2).rstrip('?')])
+        choicesList = sorted(
+            [mo.group(1).rstrip('?'), mo.group(2).rstrip('?')]
+        )
         print(choicesList)
         # form a string containing both choices in lower case
         result = (choicesList[0] + choicesList[1]).lower().encode('utf-8')
@@ -343,7 +345,8 @@ def handle(msg):
     # print(content_type)
     print(msg)
 
-    if (chat_id == group_chat_id or chat_id == admin_chat_id) and (not 'edit_date' in msg):
+    if (chat_id == group_chat_id or chat_id == admin_chat_id) and\
+            ('edit_date' not in msg):
         handlers = [
             [is_message_replied_to(botname),
              send_text_with_reply(replies[random.randint(0, len(replies) - 1)])],
@@ -373,7 +376,7 @@ def handle(msg):
             [text_contains_any_broaddef(fact18),
              send_image_with_reply_timer_fact18('http://i.imgur.com/CC3dOEH.jpg')],
             [text_contains_any_broaddef(fact26),
-             send_image_with_reply_timer_fact18('http://i.imgur.com/qa9SHgv.jpg')],
+             send_image_with_reply_timer_fact26('http://i.imgur.com/qa9SHgv.jpg')],
         ]
         for tester, handler in handlers:
             if tester(msg):
@@ -383,6 +386,8 @@ def handle(msg):
 
 
 def check_stream(streams, bot):
+    print('Twitch stream check: {:s}'.format(datetime.datetime.now()
+          .strftime('%Y-%m-%d %H:%M:%S')))
     new_streams = []
     for stream in streams:
         new_stream = stream
