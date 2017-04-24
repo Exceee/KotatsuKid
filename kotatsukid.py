@@ -237,14 +237,12 @@ def is_message_replied_to(name):
     return tester
 
 
-def is_message_forwarded_from_random(message_id, p):
+def is_message_forwarded_from(message_id):
     def tester(msg):
         if 'forward_from_chat' in msg:
-            return (msg['forward_from_chat']['id'] == message_id and
-                    random.random() > p)
+            return msg['forward_from_chat']['id'] == message_id
         elif 'forward_from' in msg:
-            return (msg['forward_from']['id'] == message_id and
-                    random.random() > p)
+            return msg['forward_from']['id'] == message_id
         else:
             return False
     return tester
@@ -264,6 +262,18 @@ def send_text_with_reply(text):
             msg['chat']['id'], text, None, None, None, msg['message_id']
         )
         return msgsent
+    return handler
+
+
+def send_text_with_reply_random(text, p):
+    def handler(msg):
+        if random.random() > p:
+            msgsent = bot.sendMessage(
+                msg['chat']['id'], text, None, None, None, msg['message_id']
+            )
+            return msgsent
+        else:
+            return False
     return handler
 
 
@@ -345,38 +355,70 @@ def handle(msg):
     # print(content_type)
     print(msg)
 
-    if (chat_id == group_chat_id or chat_id == admin_chat_id) and\
-            ('edit_date' not in msg):
+    if ((chat_id == group_chat_id or chat_id == admin_chat_id) and
+            ('edit_date' not in msg)):
         handlers = [
             [is_message_replied_to(botname),
-             send_text_with_reply(replies[random.randint(0, len(replies) - 1)])],
-            [is_message_forwarded_from_random(253025219, 0.7),
-             send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
-            [is_message_forwarded_from_random(-1001056948674, 0.7),
-             send_text_with_reply(emotions[random.randint(0, len(emotions) - 1)])],
+             send_text_with_reply(
+                 replies[random.randint(0, len(replies) - 1)]
+             )],
+
+            [is_message_forwarded_from(253025219),
+             send_text_with_reply_random(
+                 emotions[random.randint(0, len(emotions) - 1)], 0.7
+             )],
+
+            [is_message_forwarded_from(-1001056948674),
+             send_text_with_reply_random(
+                 emotions[random.randint(0, len(emotions) - 1)], 0.7
+             )],
+
             [text_match('👌'), repeat],
             [text_match('/start'),
-             send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
+             send_sticker_with_reply(
+                 yobas[random.randint(0, len(yobas) - 1)]
+             )],
+
             [text_match('/stop'),
              send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
+
             [text_contains_all(['в хату']), send_text(good_evening)],
+
             [text_contains_all([botname, 'здес']),
-             send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
+             send_text_with_reply(
+                 imherelist[random.randint(0, len(imherelist) - 1)]
+             )],
+
             [text_contains_all([botname, 'тут']),
-             send_text_with_reply(imherelist[random.randint(0, len(imherelist) - 1)])],
+             send_text_with_reply(
+                 imherelist[random.randint(0, len(imherelist) - 1)]
+             )],
+
             [text_contains_all([botname, 'или']), or_choice],
+
             [text_contains_all([botname, '?']), question],
+
             [long_text_scan(casinos), long_text_post(casinos)],
+
             [long_text_scan(bears), long_text_post(bears)],
+
             [text_contains_all_random([' аниме '], 0.95),
              send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
+
             [text_contains_all_random([' спорт '], 0.95),
              send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
+
             [text_contains_all(['авальн']), send_text_with_reply(temas)],
+
             [text_contains_any_broaddef(fact18),
-             send_image_with_reply_timer_fact18('http://i.imgur.com/CC3dOEH.jpg')],
+             send_image_with_reply_timer_fact18(
+                 'http://i.imgur.com/CC3dOEH.jpg'
+             )],
+
             [text_contains_any_broaddef(fact26),
-             send_image_with_reply_timer_fact26('http://i.imgur.com/qa9SHgv.jpg')],
+             send_image_with_reply_timer_fact26(
+                 'http://i.imgur.com/qa9SHgv.jpg'
+             )],
         ]
         for tester, handler in handlers:
             if tester(msg):
