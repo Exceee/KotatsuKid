@@ -1,5 +1,0 @@
-KotatsuKidBot
-Insert your bot key here
-Insert admin id here
-Insert main group chat id here
-Insert bot twitch id here
