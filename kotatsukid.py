@@ -154,7 +154,8 @@ def long_text_scan(file):
 
 def is_message_replied_to(name):
     def tester(msg):
-        if 'reply_to_message' in msg:
+        if ('reply_to_message' in msg and
+                'username' in msg['reply_to_message']['from']):
             return msg['reply_to_message']['from']['username'] == name
         else:
             return False
