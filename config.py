@@ -8,6 +8,8 @@ admin_chat_id =
 group_chat_id =
 # Bot twitch id
 twitch_client_id = ''
+yumoreski_chat_id_1 = 0
+yumoreski_chat_id_2 = 0
 
 # Twitch stream names to check
 streamnames = [
