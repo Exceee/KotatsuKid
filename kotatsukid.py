@@ -3,6 +3,7 @@
 import datetime
 import hashlib
 import json
+import logging
 import random
 import re
 import requests
@@ -20,8 +21,9 @@ def open_textfile_and_splitlines(path):
     return result
 
 
-def remove_spec_char(text):
-    return ''.join(e for e in text if e.isalnum())
+def remove_spec_char_and_normalize(text):
+    result = ''.join(e for e in text if e.isalnum())
+    return result.lower().strip('?!.').replace('ё', 'е')
 
 
 # Testers
@@ -61,7 +63,6 @@ def contains_word(text):
                       .search(msg['text']))
                 if mo:
                     return True
-            return False
         return False
     return tester
 
@@ -75,7 +76,6 @@ def contains_word_on_the_beginning(text):
                       .search(msg['text']))
                 if mo:
                     return True
-            return False
         return False
     return tester
 
@@ -92,16 +92,16 @@ def contains_all_with_probability(text, p):
 def scan_long_text(file):
     def tester(msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
-        for num, item in enumerate(file):
-            if (
-                    content_type == 'text' and
-                    remove_spec_char(item).lower().strip('?!.')
-                    .replace('ё', 'е') in
-                    remove_spec_char(msg['text']).lower().strip('?!.')
-                    .replace('ё', 'е') and
-                    not num == len(file) - 1
-            ):
-                return num + 1
+        if content_type == 'text':
+            for num, item in enumerate(file):
+                print(remove_spec_char_and_normalize(item))
+                print(remove_spec_char_and_normalize(msg['text']))
+                if (
+                        not num == len(file) - 1 and
+                        (remove_spec_char_and_normalize(item) in
+                         remove_spec_char_and_normalize(msg['text']))
+                ):
+                    return num + 1
         return False
     return tester
 
@@ -151,8 +151,7 @@ def make_or_choice(msg):
         # send the message
         msgsent = bot.sendMessage(
             chat_id,
-            '{:s} {:s}!'
-            .format(ofcourseWordList[random.randint(0, len(ofcourseWordList) - 1)],
+            '{:s} {:s}!'.format(random.choice(ofcourseWordList),
             choicesList[mainChoice]),
             parse_mode=None,
             disable_web_page_preview=None,
@@ -172,7 +171,7 @@ def answer_the_quesion(msg):
         m = hashlib.md5()
         m.update(result)
         random.seed(m.hexdigest())
-        answer = answerslist[random.randint(0, len(answerslist) - 1)]
+        answer = random.choice(answerslist)
         msgsent = bot.sendMessage(
             chat_id,
             answer,
@@ -369,34 +368,30 @@ def handle(msg):
 
         handlers = [
             [replied_to(config.botname),
-             send_text_with_reply(
-                 replies[random.randint(0, len(replies) - 1)])],
+             send_text_with_reply(random.choice(replies)),
 
             [forwarded_from(config.yumoreski_chat_id_1),
              send_text_with_reply_with_probability(
-                 emotions[random.randint(0, len(emotions) - 1)], 0.7)],
+                 random.choice(emotions), 0.7)],
 
             [forwarded_from(config.yumoreski_chat_id_2),
              send_text_with_reply_with_probability(
-                 emotions[random.randint(0, len(emotions) - 1)], 0.7)],
+                 random.choice(emotions), 0.7)],
 
             [text_match('👌'), repeat],
             [text_match('/start'),
-             send_sticker_with_reply(
-                 yobas[random.randint(0, len(yobas) - 1)])],
+             send_sticker_with_reply(random.choice(yobas)],
 
             [text_match('/stop'),
-             send_sticker_with_reply(yobas[random.randint(0, len(yobas) - 1)])],
+             send_sticker_with_reply(random.choice(yobas))],
 
             [contains_all(['в хату']), send_text(good_evening[0])],
 
             [contains_all([config.botname, 'здес']),
-             send_text_with_reply(
-                 imherelist[random.randint(0, len(imherelist) - 1)])],
+             send_text_with_reply(random.choice(imherelist))],
 
             [contains_all([config.botname, 'тут']),
-             send_text_with_reply(
-                 imherelist[random.randint(0, len(imherelist) - 1)])],
+             send_text_with_reply(random.choice(imherelist)],
 
             [contains_all([config.botname, 'или']), make_or_choice],
 
@@ -407,10 +402,10 @@ def handle(msg):
             [scan_long_text(bears), post_long_text(bears)],
 
             [contains_all_with_probability([' аниме '], 0.95),
-             send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
+             send_text_with_reply(random.choice(sports)],
 
             [contains_all_with_probability([' спорт '], 0.95),
-             send_text_with_reply(sports[random.randint(0, len(sports) - 1)])],
+             send_text_with_reply(random.choice(sports)],
 
             [contains_word(fact18),
              send_image_with_reply_timer_fact18(
@@ -466,7 +461,7 @@ if __name__ == '__main__':
     yobas = open_textfile_and_splitlines('settings/emotions.txt')
     replies = open_textfile_and_splitlines('settings/replies.txt')
     sports = open_textfile_and_splitlines('settings/sports.txt')
-    casinos = open_textfile_and_splitlines('settings/sports.txt')
+    casinos = open_textfile_and_splitlines('settings/casino.txt')
     bears = open_textfile_and_splitlines('settings/bear.txt')
     ofcourseWordList = open_textfile_and_splitlines('settings/ofcourse.txt')
     answerslist = open_textfile_and_splitlines('settings/answers.txt')
