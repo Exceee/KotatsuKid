@@ -89,15 +89,34 @@ def contains_all_with_probability(text, p):
     return tester
 
 
-def scan_long_text(file):
+def scan_long_text(list_name, list_of_lines):
     def tester(msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
         if content_type == 'text':
-            for num, item in enumerate(file):
-                print(remove_spec_char_and_normalize(item))
-                print(remove_spec_char_and_normalize(msg['text']))
+            # We are expecting the next line from list_of_lines in the msg,
+            # so we are checking for the line from the last call
+            if (
+                    len(list_of_lines[line_number_from_last_call[list_name]]) > 4 and
+                    (remove_spec_char_and_normalize(list_of_lines[line_number_from_last_call[list_name]]) in
+                     remove_spec_char_and_normalize(msg['text']))
+            ):
+                return line_number_from_last_call[list_name] + 1
+            # and for the next line
+            if (
+                    len(list_of_lines[line_number_from_last_call[list_name] + 1]) > 4 and
+                    (remove_spec_char_and_normalize(list_of_lines[line_number_from_last_call[list_name] + 1]) in
+                     remove_spec_char_and_normalize(msg['text']))
+            ):
+                return line_number_from_last_call[list_name] + 2
+            # Checking for exact string match in
+            for num, item in enumerate(list_of_lines):
+                if item == msg['text']:
+                    return num + 1
+            # Checking for similarity
+            for num, item in enumerate(list_of_lines):
                 if (
-                        not num == len(file) - 1 and
+                        len(item) > 4 and
+                        not num == len(list_of_lines) - 1 and
                         (remove_spec_char_and_normalize(item) in
                          remove_spec_char_and_normalize(msg['text']))
                 ):
@@ -130,20 +149,19 @@ def make_or_choice(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     # search for choices in the message
     choicesRegex = re.compile(r'\@?{:s},? (.+) или (.+)'.format(config.botname))
-    mo = choicesRegex.search(msg['text'])
-    if mo:
+    regex_result = choicesRegex.search(msg['text'])
+    if regex_result:
         # sort the choices (also strip the '?')
         choicesList = sorted(
-            [mo.group(1).rstrip('?'), mo.group(2).rstrip('?')]
+            [regex_result.group(1).rstrip('?'), regex_result.group(2).rstrip('?')]
         )
-        print(choicesList)
         # form a string containing both choices in lower case
         result = (choicesList[0] + choicesList[1]).lower().encode('utf-8')
         # calculate the hash of the string
-        m = md5(result)
-        m.update(result)
+        md5hash_of_result = hashlib.md5(result)
+        md5hash_of_result.update(result)
         # and use it in seed
-        random.seed(m.hexdigest())
+        random.seed(md5hash_of_result.hexdigest())
         # make the main choice
         mainChoice = random.randint(0, 1)
         # reset the seed
@@ -165,12 +183,12 @@ def answer_the_quesion(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     # search for question in the message
     choicesRegex = re.compile(r'\@?{:s},? (.+)\?'.format(config.botname))
-    mo = choicesRegex.search(msg['text'])
-    if mo:
+    regex_result = choicesRegex.search(msg['text'])
+    if regex_result:
         result = msg['text'].lower().rstrip('?').encode('utf-8')
-        m = hashlib.md5()
-        m.update(result)
-        random.seed(m.hexdigest())
+        md5hash_of_result = hashlib.md5()
+        md5hash_of_result.update(result)
+        random.seed(md5hash_of_result.hexdigest())
         answer = random.choice(answerslist)
         msgsent = bot.sendMessage(
             chat_id,
@@ -246,17 +264,19 @@ def repeat(msg):
     return msgsent
 
 
-def post_long_text(casinos):
+def post_long_text(list_name, list_of_lines):
     def handler(msg):
-        tester = scan_long_text(casinos)
+        tester = scan_long_text(list_name, list_of_lines)
+        line_number = tester(msg)
         msgsent = bot.sendMessage(
             msg['chat']['id'],
-            casinos[tester(msg)],
+            list_of_lines[line_number],
             parse_mode=None,
             disable_web_page_preview=None,
             disable_notification=None,
             reply_to_message_id=msg['message_id']
         )
+        line_number_from_last_call[list_name] = line_number
         return msgsent
     return handler
 
@@ -368,7 +388,7 @@ def handle(msg):
 
         handlers = [
             [replied_to(config.botname),
-             send_text_with_reply(random.choice(replies)),
+             send_text_with_reply(random.choice(replies))],
 
             [forwarded_from(config.yumoreski_chat_id_1),
              send_text_with_reply_with_probability(
@@ -380,7 +400,7 @@ def handle(msg):
 
             [text_match('👌'), repeat],
             [text_match('/start'),
-             send_sticker_with_reply(random.choice(yobas)],
+             send_sticker_with_reply(random.choice(yobas))],
 
             [text_match('/stop'),
              send_sticker_with_reply(random.choice(yobas))],
@@ -391,21 +411,23 @@ def handle(msg):
              send_text_with_reply(random.choice(imherelist))],
 
             [contains_all([config.botname, 'тут']),
-             send_text_with_reply(random.choice(imherelist)],
+             send_text_with_reply(random.choice(imherelist))],
 
             [contains_all([config.botname, 'или']), make_or_choice],
 
             [contains_all([config.botname, '?']), answer_the_quesion],
 
-            [scan_long_text(casinos), post_long_text(casinos)],
+            [scan_long_text('casinos', casinos), post_long_text('casinos', casinos)],
 
-            [scan_long_text(bears), post_long_text(bears)],
+            [scan_long_text('bears', bears), post_long_text('bears', bears)],
+
+            [scan_long_text('money', money), post_long_text('money', money)],
 
             [contains_all_with_probability([' аниме '], 0.95),
-             send_text_with_reply(random.choice(sports)],
+             send_text_with_reply(random.choice(sports))],
 
             [contains_all_with_probability([' спорт '], 0.95),
-             send_text_with_reply(random.choice(sports)],
+             send_text_with_reply(random.choice(sports))],
 
             [contains_word(fact18),
              send_image_with_reply_timer_fact18(
@@ -457,12 +479,14 @@ def check_stream(stream_list, bot):
 
 
 if __name__ == '__main__':
+    # Read text files and put the contents in lists of strings
     emotions = open_textfile_and_splitlines('settings/emotions.txt')
     yobas = open_textfile_and_splitlines('settings/emotions.txt')
     replies = open_textfile_and_splitlines('settings/replies.txt')
     sports = open_textfile_and_splitlines('settings/sports.txt')
     casinos = open_textfile_and_splitlines('settings/casino.txt')
     bears = open_textfile_and_splitlines('settings/bear.txt')
+    money = open_textfile_and_splitlines('settings/money.txt')
     ofcourseWordList = open_textfile_and_splitlines('settings/ofcourse.txt')
     answerslist = open_textfile_and_splitlines('settings/answers.txt')
     good_evening = open_textfile_and_splitlines('settings/good_evening.txt')
@@ -470,13 +494,20 @@ if __name__ == '__main__':
     fact18 = open_textfile_and_splitlines('settings/fact18.txt')
     fact26 = open_textfile_and_splitlines('settings/fact26.txt')
 
+    # Here lies time of the last call of fact18 and fact26 functions
     lasttime = {'Fact18': datetime.datetime(2016, 1, 1, 0, 0, 0, 0),
                 'Fact26': datetime.datetime(2016, 1, 1, 0, 0, 0, 0)}
+
+    # Here lies the line number from the last call of post_long_text()
+    line_number_from_last_call = {'casinos': 0, 'bears': 0, 'money': 0}
 
     bot = telepot.Bot(config.botKey)
     bot.message_loop(handle, relax=0.5)
     print('I am {:s}, nice to meet you!'.format(config.botname))
 
+    # This variable is for stream statuses:
+    #   True means the stream was online in the last check
+    #   False means the stream was offline in the last check
     streams = []
     for stream in config.streamnames:
         streams.append({'name': stream, 'status': None})
