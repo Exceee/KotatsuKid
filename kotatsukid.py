@@ -14,6 +14,9 @@ import telepot
 
 import config
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 
 def open_textfile_and_splitlines(path):
     with open(path, 'r', encoding='utf8') as file:
@@ -93,29 +96,32 @@ def scan_long_text(list_name, list_of_lines):
     def tester(msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
         if content_type == 'text':
-            # We are expecting the next line from list_of_lines in the msg,
+            # Usually we are expecting the next line from list_of_lines in msg,
             # so we are checking for the line from the last call
+            # line number for list_name is stored in
+            # line_number_from_the_last_call[list_name]
             if (
-                    len(list_of_lines[line_number_from_last_call[list_name]]) > 4 and
-                    (remove_spec_char_and_normalize(list_of_lines[line_number_from_last_call[list_name]]) in
-                     remove_spec_char_and_normalize(msg['text']))
+                line_number_from_last_call[list_name] < len(list_of_lines) and
+                (remove_spec_char_and_normalize(list_of_lines[line_number_from_last_call[list_name]]) in
+                 remove_spec_char_and_normalize(msg['text']))
             ):
                 return line_number_from_last_call[list_name] + 1
             # and for the next line
             if (
-                    len(list_of_lines[line_number_from_last_call[list_name] + 1]) > 4 and
-                    (remove_spec_char_and_normalize(list_of_lines[line_number_from_last_call[list_name] + 1]) in
-                     remove_spec_char_and_normalize(msg['text']))
+                line_number_from_last_call[list_name] + 1 < len(list_of_lines) and
+                (remove_spec_char_and_normalize(list_of_lines[line_number_from_last_call[list_name] + 1]) in
+                 remove_spec_char_and_normalize(msg['text']))
             ):
                 return line_number_from_last_call[list_name] + 2
-            # Checking for exact string match in
+            # Checking for exact string match in msg
             for num, item in enumerate(list_of_lines):
                 if item == msg['text']:
                     return num + 1
-            # Checking for similarity
+            # Checking for similarity in msg
             for num, item in enumerate(list_of_lines):
                 if (
                         len(item) > 4 and
+                        ' ' in item and
                         not num == len(list_of_lines) - 1 and
                         (remove_spec_char_and_normalize(item) in
                          remove_spec_char_and_normalize(msg['text']))
@@ -378,7 +384,7 @@ def relay(send_to_chat_id, msg):
 def handle(msg):
     startTime = datetime.datetime.now()
     content_type, chat_type, chat_id = telepot.glance(msg)
-    print(msg)
+    logger.debug(msg)
 
     if ((chat_id == config.group_chat_id or
                  chat_id == config.admin_chat_id) and
@@ -442,11 +448,11 @@ def handle(msg):
                 msgsent = handler(msg)
                 break
 
-    print(datetime.datetime.now() - startTime)
+    logger.debug(datetime.datetime.now() - startTime)
 
 
 def check_stream(stream_list, bot):
-    print('Twitch stream check: {:s}'.format(datetime.datetime.now()
+    logger.info('Twitch stream check: {:s}'.format(datetime.datetime.now()
           .strftime('%Y-%m-%d %H:%M:%S')))
     new_streams = []
     for stream in stream_list:
@@ -457,13 +463,13 @@ def check_stream(stream_list, bot):
                 .format(stream['name'], config.twitch_client_id)
             )
         except:
-            print(stream_data.status_code)
-            print(stream_data.text)
+            logger.error(stream_data.status_code)
+            logger.error(stream_data.text)
 
         user_info = json.loads(stream_data.text)
         if user_info['stream']:
             stream_name = user_info['stream']['channel']['display_name']
-            print('{:s} is online'.format(stream['name']))
+            logger.info('{:s} is online'.format(stream['name']))
             if new_stream['status'] == False:
                 msgsent = bot.sendMessage(
                     config.group_chat_id,
@@ -471,7 +477,7 @@ def check_stream(stream_list, bot):
                 )
                 new_stream['status'] = True
         else:
-            print('{:s} is offline'.format(stream['name']))
+            logger.info('{:s} is offline'.format(stream['name']))
             new_stream['status'] = False
         new_streams.append(new_stream)
     threading.Timer(300, check_stream, [stream_list, bot]).start()
