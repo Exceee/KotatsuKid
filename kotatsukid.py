@@ -96,6 +96,7 @@ def scan_long_text(list_name, list_of_lines):
     def tester(msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
         if content_type == 'text':
+            line_number = False
             # Usually we are expecting the next line from list_of_lines in msg,
             # so we are checking for the line from the last call
             # line number for list_name is stored in
@@ -105,28 +106,34 @@ def scan_long_text(list_name, list_of_lines):
                 (remove_spec_char_and_normalize(list_of_lines[line_number_from_last_call[list_name]]) in
                  remove_spec_char_and_normalize(msg['text']))
             ):
-                return line_number_from_last_call[list_name] + 1
+                line_number = line_number_from_last_call[list_name] + 1
             # and for the next line
-            if (
+            elif (
                 line_number_from_last_call[list_name] + 1 < len(list_of_lines) and
                 (remove_spec_char_and_normalize(list_of_lines[line_number_from_last_call[list_name] + 1]) in
                  remove_spec_char_and_normalize(msg['text']))
             ):
-                return line_number_from_last_call[list_name] + 2
+                line_number = line_number_from_last_call[list_name] + 2
             # Checking for exact string match in msg
-            for num, item in enumerate(list_of_lines):
-                if item == msg['text']:
-                    return num + 1
-            # Checking for similarity in msg
-            for num, item in enumerate(list_of_lines):
-                if (
+            else:
+                for num, item in enumerate(list_of_lines):
+                    if item == msg['text']:
+                        line_number = num + 1
+                        break
+                # Checking for similarity in msg
+                    if (
                         len(item) > 4 and
                         ' ' in item and
                         not num == len(list_of_lines) - 1 and
                         (remove_spec_char_and_normalize(item) in
                          remove_spec_char_and_normalize(msg['text']))
-                ):
-                    return num + 1
+                    ):
+                        line_number = num + 1
+                        break
+            # Return line number of the selected line if it isn't next line
+            if (line_number and
+               not line_number_from_last_call[list_name] + 1 == line_number):
+                return line_number
         return False
     return tester
 
@@ -429,11 +436,7 @@ def handle(msg):
 
             [scan_long_text('money', money), post_long_text('money', money)],
 
-            [contains_all_with_probability([' аниме '], 0.95),
-             send_text_with_reply(random.choice(sports))],
-
-            [contains_all_with_probability([' спорт '], 0.95),
-             send_text_with_reply(random.choice(sports))],
+            [scan_long_text('megapixel', megapixel), post_long_text('megapixel', megapixel)],
 
             [contains_word(fact18),
              send_image_with_reply_timer_fact18(
@@ -493,6 +496,7 @@ if __name__ == '__main__':
     casinos = open_textfile_and_splitlines('settings/casino.txt')
     bears = open_textfile_and_splitlines('settings/bear.txt')
     money = open_textfile_and_splitlines('settings/money.txt')
+    megapixel = open_textfile_and_splitlines('settings/megapixel.txt')
     ofcourseWordList = open_textfile_and_splitlines('settings/ofcourse.txt')
     answerslist = open_textfile_and_splitlines('settings/answers.txt')
     good_evening = open_textfile_and_splitlines('settings/good_evening.txt')
@@ -500,12 +504,15 @@ if __name__ == '__main__':
     fact18 = open_textfile_and_splitlines('settings/fact18.txt')
     fact26 = open_textfile_and_splitlines('settings/fact26.txt')
 
-    # Here lies time of the last call of fact18 and fact26 functions
+    # Dict contains time of the last call of fact18 and fact26 functions
     lasttime = {'Fact18': datetime.datetime(2016, 1, 1, 0, 0, 0, 0),
                 'Fact26': datetime.datetime(2016, 1, 1, 0, 0, 0, 0)}
 
-    # Here lies the line number from the last call of post_long_text()
-    line_number_from_last_call = {'casinos': 0, 'bears': 0, 'money': 0}
+    # Dict contains the line number from the last call of post_long_text()
+    line_number_from_last_call = {'casinos': 0,
+                                  'bears': 0,
+                                  'money': 0,
+                                  'megapixel': 0}
 
     bot = telepot.Bot(config.botKey)
     bot.message_loop(handle, relax=0.5)
@@ -514,6 +521,7 @@ if __name__ == '__main__':
     # This variable is for stream statuses:
     #   True means the stream was online in the last check
     #   False means the stream was offline in the last check
+    #   None means there was no check
     streams = []
     for stream in config.streamnames:
         streams.append({'name': stream, 'status': None})
