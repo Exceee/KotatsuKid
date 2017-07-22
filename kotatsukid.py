@@ -182,7 +182,7 @@ def make_or_choice(msg):
         # send the message
         msgsent = bot.sendMessage(
             chat_id,
-            '{:s} {:s}!'.format(random.choice(ofcourseWordList),
+            '{:s} {:s}!'.format(random.choice(txt_data['ofcourse_list']),
             choicesList[mainChoice]),
             parse_mode=None,
             disable_web_page_preview=None,
@@ -192,7 +192,7 @@ def make_or_choice(msg):
     return msgsent
 
 
-def answer_the_quesion(msg):
+def answer_the_question(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     # search for question in the message
     choicesRegex = re.compile(r'\@?{:s},? (.+)\?'.format(config.botname))
@@ -202,7 +202,7 @@ def answer_the_quesion(msg):
         md5hash_of_result = hashlib.md5()
         md5hash_of_result.update(result)
         random.seed(md5hash_of_result.hexdigest())
-        answer = random.choice(answerslist)
+        answer = random.choice(txt_data['answers_list'])
         msgsent = bot.sendMessage(
             chat_id,
             answer,
@@ -401,54 +401,61 @@ def handle(msg):
 
         handlers = [
             [replied_to(config.botname),
-             send_text_with_reply(random.choice(replies))],
+             send_text_with_reply(random.choice(txt_data['replies']))],
 
             [forwarded_from(config.yumoreski_chat_id_1),
              send_text_with_reply_with_probability(
-                 random.choice(emotions), 0.7)],
+                 random.choice(txt_data['emotions']), 0.7)],
 
             [forwarded_from(config.yumoreski_chat_id_2),
              send_text_with_reply_with_probability(
-                 random.choice(emotions), 0.7)],
+                 random.choice(txt_data['emotions']), 0.7)],
 
             [text_match('👌'), repeat],
             [text_match('/start'),
-             send_sticker_with_reply(random.choice(yobas))],
+             send_sticker_with_reply(random.choice(txt_data['yobas']))],
 
             [text_match('/stop'),
-             send_sticker_with_reply(random.choice(yobas))],
+             send_sticker_with_reply(random.choice(txt_data['yobas']))],
 
-            [contains_all(['в хату']), send_text(good_evening[0])],
+            [contains_all(['в хату']), send_text(txt_data['good_evening'][0])],
 
             [contains_all([config.botname, 'здес']),
-             send_text_with_reply(random.choice(imherelist))],
+             send_text_with_reply(random.choice(txt_data['imhere_list']))],
 
             [contains_all([config.botname, 'тут']),
-             send_text_with_reply(random.choice(imherelist))],
+             send_text_with_reply(random.choice(txt_data['imhere_list']))],
 
-            [contains_all([config.botname, 'или']), make_or_choice],
+            [contains_all([config.botname, 'или']),
+             make_or_choice],
 
-            [contains_all([config.botname, '?']), answer_the_quesion],
+            [contains_all([config.botname, '?']),
+             answer_the_question],
 
-            [scan_long_text('casinos', casinos), post_long_text('casinos', casinos)],
+            [scan_long_text('casinos', txt_data['casinos']),
+             post_long_text('casinos', txt_data['casinos'])],
 
-            [scan_long_text('bears', bears), post_long_text('bears', bears)],
+            [scan_long_text('bears', txt_data['bears']),
+             post_long_text('bears', txt_data['bears'])],
 
-            [scan_long_text('money', money), post_long_text('money', money)],
+            [scan_long_text('money', txt_data['money']),
+             post_long_text('money', txt_data['money'])],
 
-            [scan_long_text('megapixel', megapixel), post_long_text('megapixel', megapixel)],
+            [scan_long_text('megapixel', txt_data['megapixel']),
+             post_long_text('megapixel', txt_data['megapixel'])],
 
-            [contains_word(fact18),
+            [contains_word(txt_data['fact18']),
              send_image_with_reply_timer_fact18(
                  'http://i.imgur.com/CC3dOEH.jpg')],
 
-            [contains_word(fact26),
+            [contains_word(txt_data['fact26']),
              send_image_with_reply_timer_fact26(
                  'http://i.imgur.com/qa9SHgv.jpg')],
         ]
         for tester, handler in handlers:
             if tester(msg):
                 msgsent = handler(msg)
+                logger.debug(msgsent)
                 break
 
     logger.debug(datetime.datetime.now() - startTime)
@@ -488,21 +495,10 @@ def check_stream(stream_list, bot):
 
 
 if __name__ == '__main__':
-    # Read text files and put the contents in lists of strings
-    emotions = open_textfile_and_splitlines('settings/emotions.txt')
-    yobas = open_textfile_and_splitlines('settings/emotions.txt')
-    replies = open_textfile_and_splitlines('settings/replies.txt')
-    sports = open_textfile_and_splitlines('settings/sports.txt')
-    casinos = open_textfile_and_splitlines('settings/casino.txt')
-    bears = open_textfile_and_splitlines('settings/bear.txt')
-    money = open_textfile_and_splitlines('settings/money.txt')
-    megapixel = open_textfile_and_splitlines('settings/megapixel.txt')
-    ofcourseWordList = open_textfile_and_splitlines('settings/ofcourse.txt')
-    answerslist = open_textfile_and_splitlines('settings/answers.txt')
-    good_evening = open_textfile_and_splitlines('settings/good_evening.txt')
-    imherelist = open_textfile_and_splitlines('settings/imhere.txt')
-    fact18 = open_textfile_and_splitlines('settings/fact18.txt')
-    fact26 = open_textfile_and_splitlines('settings/fact26.txt')
+    # Read text files and put the contents in txt_data
+    txt_data = {}
+    for filename in config.filenames:
+        txt_data[filename] = [f.rstrip() for f in open('settings/' + filename + '.txt')]
 
     # Dict contains time of the last call of fact18 and fact26 functions
     lasttime = {'Fact18': datetime.datetime(2016, 1, 1, 0, 0, 0, 0),
@@ -518,7 +514,7 @@ if __name__ == '__main__':
     bot.message_loop(handle, relax=0.5)
     print('I am {:s}, nice to meet you!'.format(config.botname))
 
-    # This variable is for stream statuses:
+    # This dict is for stream statuses:
     #   True means the stream was online in the last check
     #   False means the stream was offline in the last check
     #   None means there was no check
