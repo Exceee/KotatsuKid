@@ -348,6 +348,15 @@ def send_image_with_reply_timer_fact26(filename):
     return handler
 
 
+def is_msg_left_chat_member(word):
+    def handler(msg):
+        content_type, chat_type, chat_id = telepot.glance(msg)
+        if content_type == 'left_chat_member':
+            return True
+        else:
+            return False
+    return handler
+
 def relay(send_to_chat_id, msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     if content_type == 'text':
@@ -451,6 +460,9 @@ def handle(msg):
             [contains_word(txt_data['fact26']),
              send_image_with_reply_timer_fact26(
                  'http://i.imgur.com/qa9SHgv.jpg')],
+
+            [is_msg_left_chat_member(None),
+             send_sticker('CAADAgAD_gEAAqtWmgzlV2enfLRuJAI')]
         ]
         for tester, handler in handlers:
             if tester(msg):
